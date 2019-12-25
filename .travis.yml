@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t ifchicken/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true ifchicken/react-test npm test
+
+after_success:
+  - docker build -t ifchicken/multi-client ./client
+  - docker build -t ifchicken/multi-nginx ./nginx
+  - docker build -t ifchicken/multi-server ./server
+  - docker build -t ifchicken/multi-worker ./worker
+  # Login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those imgs and push them to docker hub
+  - docker push ifchicken/multi-client
+  - docker push ifchicken/multi-nginx
+  - docker push ifchicken/multi-server
+  - docker push ifchicken/multi-worker
